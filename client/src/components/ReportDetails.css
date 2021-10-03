@@ -1,0 +1,41 @@
+.rptDetails {
+    border: solid black 1px;
+    border-radius: 5px;
+    margin: auto;
+    min-height: 400px;
+    min-width: 400px;
+    max-width: 550px;
+
+}
+
+.rpt-label {
+    font-weight: bold;
+}
+
+.rpt-table {
+    display: table; 
+    width: 100%;
+}
+
+.rpt-row {
+    display: table-row;
+    width: 100%;
+    clear: both;
+}
+
+.rpt-col {
+    float: left; /* fix for  buggy browsers */
+    margin-right: 5px;
+    display: table-column; 
+}
+.emptyNotice {
+    height: 400px;
+    line-height: 400px;
+    text-align: center;
+    font-style: italic;
+}
+.emptyNotice > span {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
+}

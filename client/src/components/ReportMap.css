@@ -1,0 +1,10 @@
+.rptOverlay {
+    background: white;
+    border: solid 1px grey;
+    border-radius: 10px;
+    box-shadow: 5px 10px grey;
+    position:absolute;
+    white-space: nowrap;
+    z-index: 1000;
+  }
+  
