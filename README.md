@@ -1,0 +1,1 @@
+This is a simple MERN project (MongoDB, Express, React, NodeJS) that allows users to upload their bylaw noise complaints to the database and have the addresses of their and other complaints plotted on a map.
