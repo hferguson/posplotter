@@ -1,1 +1,3 @@
+<h1>Position Plotter</h1>
 This is a simple MERN project (MongoDB, Express, React, NodeJS) that allows users to upload their bylaw noise complaints to the database and have the addresses of their and other complaints plotted on a map.
+I wrote this as an attempt to a) learn the MERN stack and b) perhaps be able to give residents in my community of Sandy Hill in Ottawa a chance to report their noise complaints publicly and have everyone's complaints plotted on a map.  The app could easily be repurposed to plot other types of data (crime stats) or incidents, or frankly anything you want where you have an address, and you want to find that address on a map.
