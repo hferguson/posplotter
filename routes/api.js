@@ -57,6 +57,14 @@ router.get('/reports', (req, res, next) => {
     .catch(next);           // todo, figure out what next is
 });
 
+
+router.get('/reports/:id/finddups', (req, res, next) => {
+    const id= req.params.id;
+    const rpt = req.body;
+    const srch_date = rpt.incident_date;
+    const 
+});
+
 router.post('/reports', (req, res, next) => {
     // request body should contain a JSON object with
     // incident date, incident details, and an address

@@ -36,7 +36,7 @@ function ReportEditor({handleOKMsg, handleErrMsg, handleRefresh}) {
         rptPayload["postal_code"] = postal_code.current.value;
         rptPayload["city"] = city.current.value;;
         rptPayload["province"] = prov.current.value;
-console.log("Sending report to db");
+
         axios.post('/api/reports', rptPayload)
             .then((res) => {
             console.log(res);
