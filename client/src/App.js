@@ -4,8 +4,10 @@ import {Alert} from 'react-bootstrap';
 import ReportMap from './components/ReportMap';
 import ReportDetails from './components/ReportDetails';
 import ReportEditor from './components/ReportEditor';
+import {getCentrePoint} from './utils/wpfunctions.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+
 // 45.4253° N, 75.6829° W
 
 
@@ -44,42 +46,13 @@ function App() {
       })
       .catch((err)  => console.log(err));
   }
-  /**
-   * Centres the map based on waypoints passed in
-   * @param  waypoints 
-   */
-  const getCentrePoint = (waypoints) => {
-    let avgLat = 0;
-    let avgLon = 0;
-    //console.log(`Setting center based on ${waypoints}`);
-    const numPts = waypoints.length;
-    let wpCount = 0;
-    if (numPts >0) {
-      for (let i=0;i<numPts;i++) {
-          const wp = waypoints[i];
-          //console.log(`Waypoint ${wp._id}: ${wp.lat} ${wp.lon}`);
-          if (!isNaN(wp.lat) && !isNaN(wp.lon)) {
-            wpCount++;
-            avgLat += wp.lat;
-            avgLon += wp.lon;
-          }
-          
-      }
-      if (wpCount>0) {
-        avgLat = avgLat/wpCount;
-        avgLon = avgLon/wpCount;
-        console.log(`Calculated center: ${avgLat}, ${avgLon}`);
-      }
-      
-    }
-     
-    return {
-      'lat': avgLat,
-      'lon': avgLon
-    }
-  }
+  
   useEffect(() => {
     console.log("Initialization of waypoints");
+    console.log(process);
+    console.log(`Current dir is ${process.cwd()}`);
+    console.log(process.env);
+    console.log(__dirname);
     getWaypoints();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

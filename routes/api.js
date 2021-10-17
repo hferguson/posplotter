@@ -8,6 +8,7 @@ const router = express.Router();
 const BylawReports = require('../models/reports');
 require('dotenv').config();
 
+
 const queryLatLon = (data) => {
     console.log("Querying Geo API...");
     console.log(data._id.toString());
@@ -19,7 +20,7 @@ const queryLatLon = (data) => {
                     query: query_string
     };
     console.log(`Using payload data ${params.query}`);
-    axios.get(process.env.GEOURL, {params})
+    axios.get(`${process.env.GEOURL_BASE}/forward`, {params})
         .then((response) => {
             
             const data = response.data.data;      
@@ -57,12 +58,41 @@ router.get('/reports', (req, res, next) => {
     .catch(next);           // todo, figure out what next is
 });
 
+router.get('/reports/addrlup/:lat/:lon', (req, res, next) => {
+    const lat = req.params.lat;
+    const lon = req.params.lon;
+    const query_string = `${lat},${lon}`;
+
+    const params = {
+        access_key: process.env.GEOAPIKEY,
+        query: query_string,
+        limit: 5
+    };
+    //console.log(`Using payload data ${params.query}`);
+    //console.log(`Calling ${process.env.GEOURL_BASE}/reverse`)
+    axios.get(`${process.env.GEOURL_BASE}/reverse`, {params})
+        .then(response => {
+            console.log(response.data);
+            return response.json(response.data);
+        })
+        .catch(error => {
+            console.log("Got error from Position stack API");
+            //console.log(error);
+            const resp = error.response;
+            const statusCode = resp.status;
+            const statusMsg = resp.statusText;
+            //res.status = statusCode;
+            //res.status(statusCode).json(statusMsg);
+            res.json({error: statusMsg});
+        });
+
+});
 
 router.get('/reports/:id/finddups', (req, res, next) => {
     const id= req.params.id;
     const rpt = req.body;
     const srch_date = rpt.incident_date;
-    const 
+    return (res.json([]));
 });
 
 router.post('/reports', (req, res, next) => {
@@ -72,7 +102,7 @@ router.post('/reports', (req, res, next) => {
         BylawReports.create(req.body)
             .then((data) => queryLatLon(data))
             .then((data) => res.json(data))
-            .catch(next);
+            .catch(res.json({error: "unspecified error"}));
     } else {
         let err_msg = 'Incomplete data ';
         if (!req.body.incident_date)

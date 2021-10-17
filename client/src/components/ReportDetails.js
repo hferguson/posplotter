@@ -13,6 +13,10 @@ function ReportDetails({report}) {
                         <div className="rpt-col">{moment(report.incident_date).format("ddd MMM DD YYYY h:mm a")}</div>
                     </div>
                     <div className="rpt-row">
+                        <div className="rpt-col rpt-label">Bylaw Incident ID:</div>
+                        <div className="rpt-col">{report.bylaw_rpt_id.length > 0 ? report.bylaw_rpt_id : 'none specified'}</div>
+                    </div>
+                    <div className="rpt-row">
                         <div className="rpt-col rpt-label">Address:</div>
                         <div className="rpt-col">{report.address_string}</div>
                     </div>

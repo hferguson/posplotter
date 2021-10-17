@@ -50,8 +50,9 @@ app.use('/api', routes);
 
 // Anything that doesn't fit the above will give an error
 app.use((err, req, res, next) => {
-  console.log(req);
-  console.log(err);
+  console.log("This request not valid");
+  console.log(req.url);
+  //console.log(err);
   next();
 });
 
