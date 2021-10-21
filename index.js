@@ -1,5 +1,5 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+//const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const routes = require('./routes/api');
 
@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 
 // We got bodyParser from the original tutorial. NodeJS is reporting this as deprecated.
 // TODO: Look for an alternative
-app.use(bodyParser.json());
+app.use(express.json());
 
 // The api.js defines all the responses to our requests
 app.use('/api', routes);

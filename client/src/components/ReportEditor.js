@@ -1,25 +1,46 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Datetime from 'react-datetime';
 import axios from 'axios';
+import {getValFromObj, setValOnDOMRef} from '../utils/wpfunctions.js';
 import "react-datetime/css/react-datetime.css";
 
 import {Button, Modal} from 'react-bootstrap';
 
-function ReportEditor({handleOKMsg, handleErrMsg, handleRefresh}) {
+/**
+ * This component will always display a Report button that when clicked will
+ * open a modal dialog with a form to enter report info.
+ * TODO: tie this in with the address list component so we can 
+ * pre-populate with the address when the user selects an address from that
+ * po-up (See AddressListDlg)
+ * @param {handleOKMsg} - handles case where form returns OK
+ * @param {handleErrMsg} - handles case where form returns an error
+ * @param {resetAddress} - used to reset the state component in the parent that sets prefilAddress
+ * @param {prefilAddress} - use this address object to prefil the form (including co-ordinates)
+ * @returns JSX component
+ */
+function ReportEditor({handleOKMsg, handleErrMsg, resetAddress, prefilAddress}) {
     const [dlgOpen,setDlgOpen] = useState(false);
     const [rptDate,setRptDate] = useState(new Date());
-    const addr_string = useRef("");
+    // These get prefilled if user had clicked on map instead of entering an address.
+    const init_addr = getValFromObj(prefilAddress, 'name')
+    const addr_string = useRef(init_addr);
+    const init_pcode = getValFromObj(getValFromObj(prefilAddress, 'postalcode'))
     const postal_code = useRef("");
+    const init_city = getValFromObj(prefilAddress, 'locality');
     const city = useRef("");
+    const init_prov = getValFromObj(prefilAddress, 'region_code');
     const prov = useRef("");
     const rptId = useRef("");
     const inc_details = useRef("");
 
+    
+   
     const openForm = (event) => {
         setDlgOpen(true);
     }
 
     const closeForm = (event) => {
+        resetAddress(null);
         setDlgOpen(false);
     }
 
@@ -36,22 +57,38 @@ function ReportEditor({handleOKMsg, handleErrMsg, handleRefresh}) {
         rptPayload["postal_code"] = postal_code.current.value;
         rptPayload["city"] = city.current.value;;
         rptPayload["province"] = prov.current.value;
-
+        
+        // If we have co-ordinates (user clicked on map), pass them in 
+        // and then we only have to insert rather than query the database
+        if (prefilAddress != null) {
+            if (!isNaN(prefilAddress.latitude) && !isNaN(prefilAddress.longitude)) {
+                rptPayload["lat"] = prefilAddress.latitude;
+                rptPayload["lon"] = prefilAddress.longitude;
+            }
+        }
         axios.post('/api/reports', rptPayload)
             .then((res) => {
-            console.log(res);
                 handleOKMsg(`Report saved`);
-                //handleRefresh();
+                resetAddress(null);
                 setDlgOpen(false);
             })
             .catch((error) => {
                 handleErrMsg(`Unable to save report`);
+                setDlgOpen(false);
+                resetAddress(null);
                 console.log(error);
             });
         
     }
+
+    useEffect(() => {
+        setDlgOpen(prefilAddress != null);
+        
+    }, [prefilAddress]);
+
     return (
         <>
+        {(prefilAddress != null) ? console.log(`Have prefil address ${prefilAddress.name}, dlgOpen=${dlgOpen}`) : console.log("no prefil address")}
             <Modal animation={false} show={dlgOpen} onHide={closeForm}>
                 <Modal.Header closeButton>
                     <Modal.Title>Incident Report</Modal.Title>
@@ -73,12 +110,12 @@ function ReportEditor({handleOKMsg, handleErrMsg, handleRefresh}) {
                             <tr>
                                 <td>Address where disturbance came from</td>
                                 <td>
-                                    <input name="address_string" ref={addr_string} title="123 Fake St" id="address_string"></input>
+                                    <input name="address_string" ref={addr_string} title="123 Fake St" id="address_string" defaultValue={init_addr}></input>
                                     <br/>
-                                    <input name="pcode" id="pcode" ref={postal_code} title="Enter the postal code or leave blank if you don't know it"/>
-                                    <input name="city" id="city" ref={city} defaultValue="Ottawa"></input>
+                                    <input name="pcode" id="pcode" ref={postal_code} defaultValue={init_pcode} title="Enter the postal code or leave blank if you don't know it"  />
+                                    <input name="city" id="city" ref={city} defaultValue={init_city}></input>
                                     <br/>
-                                    <select name="province" ref={prov} defaultValue="ON">
+                                    <select name="province" ref={prov} defaultValue={init_prov}>
                                         <option value="AB">Alberta</option>
                                         <option value="BC">British Columbia</option>
                                         <option value="MB">Manitoba</option>

@@ -3,26 +3,27 @@ import axios from 'axios';
 import { Map, Marker,  Overlay, ZoomControl} from "pigeon-maps";
 import './ReportMap.css';
 
-function ReportMap({centre, waypoints, selectedWP, setWaypoint}) {
+function ReportMap({centre, waypoints, selectedWP, setWaypoint, setAddresses}) {
 
     // Event handlers
     const handleClick = (event) => {
         
         const payload = event.payload;
-
         setWaypoint(payload);
     }
     const handleMapClick = (event) => {
-        console.log("Map click");
-        console.log(event);
+        //console.log("Map click");
+        //console.log(event);
         const [lat,lon] = event.latLng;
         
         axios.get(`/api/reports/addrlup/${lat}/${lon}`)
-            .then(data => {
-                    if (data.hasOwnProperty('data')) {
-                        console.log(data.data);
-                    } else if (data.hasOwnProperty('error')) {
-                        alert(data.error);
+            .then(res => {
+                    console.log(res)
+                    if (res.hasOwnProperty('data')) {
+                        // Send address array to main app component
+                        setAddresses(res.data.data);
+                    } else if (res.hasOwnProperty('error')) {
+                        alert(res.error);
                     }
                    
             })
@@ -40,6 +41,7 @@ function ReportMap({centre, waypoints, selectedWP, setWaypoint}) {
                             width={25} 
                             anchor={[wp.lat, wp.lon]}
                             payload={wp} 
+                            color={selectedWP != null && selectedWP._id === wp._id ? 'yellow' : 'red'}
                             onClick={handleClick} />
                 )
             })}

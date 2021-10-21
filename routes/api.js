@@ -73,16 +73,16 @@ router.get('/reports/addrlup/:lat/:lon', (req, res, next) => {
     axios.get(`${process.env.GEOURL_BASE}/reverse`, {params})
         .then(response => {
             console.log(response.data);
-            return response.json(response.data);
+            return res.json(response.data);
         })
         .catch(error => {
             console.log("Got error from Position stack API");
-            //console.log(error);
+            console.log(error);
             const resp = error.response;
+            console.log(resp);
             const statusCode = resp.status;
             const statusMsg = resp.statusText;
-            //res.status = statusCode;
-            //res.status(statusCode).json(statusMsg);
+            
             res.json({error: statusMsg});
         });
 
@@ -91,7 +91,8 @@ router.get('/reports/addrlup/:lat/:lon', (req, res, next) => {
 router.get('/reports/:id/finddups', (req, res, next) => {
     const id= req.params.id;
     const rpt = req.body;
-    const srch_date = rpt.incident_date;
+    const address_string = rpt.address_string;
+    
     return (res.json([]));
 });
 
@@ -99,8 +100,14 @@ router.post('/reports', (req, res, next) => {
     // request body should contain a JSON object with
     // incident date, incident details, and an address
     if (req.body.incident_date && req.body.incident_details && req.body.address_string) {
+        // Somewhat conditional, and I'm not sure I'm handling this the best way.
+        // If the req.body contains .lat and .lon, then we don't need to get map coordinates.
+        // so we don't want the 
         BylawReports.create(req.body)
-            .then((data) => queryLatLon(data))
+            .then((data) => {
+                if (!req.body.lat || !req.body.lon)
+                    queryLatLon(data);
+            })
             .then((data) => res.json(data))
             .catch(res.json({error: "unspecified error"}));
     } else {

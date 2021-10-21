@@ -4,6 +4,7 @@ import {Alert} from 'react-bootstrap';
 import ReportMap from './components/ReportMap';
 import ReportDetails from './components/ReportDetails';
 import ReportEditor from './components/ReportEditor';
+import AddressListDlg from './components/AddressListDlg';
 import {getCentrePoint} from './utils/wpfunctions.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -12,11 +13,15 @@ import './App.css';
 
 
 function App() {
-  const [waypoints, setWaypoints] = useState([]);
-  const [mapCtr, setMapCtr] = useState({
+  const [mapaddrs,setMapAddrs] = useState([]);    // Addresses found when user clicks on map
+  const [waypoints, setWaypoints] = useState([]); // waypoints already stored in bylaw db
+  const [mapCtr, setMapCtr] = useState({          // calculated map center - defaults to Sandy Hill
     lat: 45.4253,
     lon: -75.6829
   });
+  const [selMapAddr,setSelMapAddr] = useState(null); // Map address from reverse lookup that user
+                                                      // indicated is the address of the incident they 
+                                                      // want to report
   const [selWP, setSelWP] = useState(null);   // currently selected waypoint to display details about
   const [dlgMsg, setDlgMsg] = useState({
       message: '',
@@ -46,13 +51,14 @@ function App() {
       })
       .catch((err)  => console.log(err));
   }
-  
+  const selectAddressForRpt = (address) => {
+      //console.log(address);
+      setMapAddrs([]);  // get rid of list
+      setSelMapAddr(address); // set selected address in state to be passed into editor
+  }
+
   useEffect(() => {
     console.log("Initialization of waypoints");
-    console.log(process);
-    console.log(`Current dir is ${process.cwd()}`);
-    console.log(process.env);
-    console.log(__dirname);
     getWaypoints();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -66,7 +72,13 @@ function App() {
     }
       
   }, [dlgDismissed]);
-  // 
+  
+  // When user selects a waypoint, check if there are duplicates
+  useEffect(() => {
+    if (selWP == null)
+      return;
+    
+  }, [selWP])
   return (
     
     <div className="App">
@@ -94,9 +106,10 @@ function App() {
          {dlgMsg.message.length > 0 && console.log(`Msg is ${dlgMsg.message}`) }
         <div className="AppComponents">
           <ReportDetails report={selWP} />
-          <ReportMap centre={mapCtr} waypoints={waypoints} selectedWP={selWP} setWaypoint={setSelWP} />
+          <ReportMap centre={mapCtr} waypoints={waypoints} selectedWP={selWP} setWaypoint={setSelWP} setAddresses={setMapAddrs}/>
         </div>
-        <ReportEditor handleOKMsg={setOKMsg} handleErrMsg={setErrorMsg} handleRefresh={getWaypoints} />
+        <ReportEditor handleOKMsg={setOKMsg} handleErrMsg={setErrorMsg} resetAddress={setSelMapAddr} prefilAddress={selMapAddr}/>
+        <AddressListDlg addresses={mapaddrs} addressHandler={selectAddressForRpt} />
         <p>An experiment from Hugh Ferguson Consulting Ltd.</p>
         <p>React version: {React.version}</p>
     </div>
