@@ -26,9 +26,9 @@ function ReportEditor({handleOKMsg, handleErrMsg, resetAddress, prefilAddress}) 
     const addr_string = useRef(init_addr);
     const init_pcode = getValFromObj(getValFromObj(prefilAddress, 'postalcode'))
     const postal_code = useRef("");
-    const init_city = getValFromObj(prefilAddress, 'locality');
+    const init_city = getValFromObj(prefilAddress, 'locality') || 'Ottawa';
     const city = useRef("");
-    const init_prov = getValFromObj(prefilAddress, 'region_code');
+    const init_prov = getValFromObj(prefilAddress, 'region_code') || 'ON';
     const prov = useRef("");
     const rptId = useRef("");
     const inc_details = useRef("");
@@ -66,17 +66,27 @@ function ReportEditor({handleOKMsg, handleErrMsg, resetAddress, prefilAddress}) 
                 rptPayload["lon"] = prefilAddress.longitude;
             }
         }
+        // TO DO: THis not catching errors
         axios.post('/api/reports', rptPayload)
             .then((res) => {
-                handleOKMsg(`Report saved`);
+                // Note: AXIOS gets every response as if it were OK
+                
+                console.log("post returned...");
+                console.log(res);
+                if (res.hasOwnProperty('error')) {
+                    handleErrMsg(`Unable to save report: ${res.error}`);
+                } else {
+                    handleOKMsg(`Report saved`);
+                }
+               
                 resetAddress(null);
                 setDlgOpen(false);
             })
             .catch((error) => {
-                handleErrMsg(`Unable to save report`);
+                console.log("Got error from api");
+                handleErrMsg(`Unable to save report: ${error.message}`);
                 setDlgOpen(false);
                 resetAddress(null);
-                console.log(error);
             });
         
     }
