@@ -46,8 +46,8 @@ const processGeoData = (id, entries) => {
     //console.log(posEntry);
     console.log(`updating entry ${id}. New coordinates ${posEntry.latitude}, ${posEntry.longitude}`);
     BylawReports.updateOne({_id: id}, 
-                           {$set:{'lat' : posEntry.latitude, 'lon' : posEntry.longitude}, 
-                                  'location' : {'type' : 'Point', 'coordinates': [posEntry.longitude, posEntry.latitude]}},
+                           {$set:{'lat' : posEntry.latitude, 'lon' : posEntry.longitude, 
+                                  'location' : {'type' : 'Point', 'coordinates': [posEntry.longitude, posEntry.latitude]}}},
                            {upsert:true})
                 .then("Data inserted")
                 .catch(error => console.log(error));
@@ -113,10 +113,15 @@ router.get('/reports/:id/finddups', (req, res, next) => {
     const id= req.params.id;
     const rpt = req.body;
     const address_string = rpt.address_string;
-    
-    BylawReports.find({$and: [{$eq : address_string},{$ne: {_id: id}}] })
+    const location = rpt.location;
+    const coords = location.coordinates;
+    const maxDist = 8;      // 8 metres - roughly the width of a property lot
+
+    BylawReports.find({$and: [{location: {$near: {$geometry: { type: "Point", coordinates: coords }, $maxDistance: maxDist}}}, {"_id": {$ne : id}}]})
                 .then((data) => res.json(data) )        // send data back as a JSON array
-                .catch(error => next(error));           
+                .catch(error => {console.log(error.message);
+                                 next(error);
+                });           
     
 });
 
@@ -126,7 +131,13 @@ router.post('/reports', (req, res, next) => {
     if (req.body.incident_date && req.body.incident_details && req.body.address_string) {
         // Somewhat conditional, and I'm not sure I'm handling this the best way.
         // If the req.body contains .lat and .lon, then we don't need to get map coordinates.
-        // so we don't want the 
+        // If we do, need to
+        
+        if (req.body.lat && req.body.lon) {
+            const location = {"type": "Point", "coordinates": [req.body.lon, req.body.lat]};
+            req.body.location = location;
+        }
+
         BylawReports.create(req.body)
             .then((data) => {
                 if (!req.body.lat || !req.body.lon)
