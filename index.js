@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require("cors");
 //const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const routes = require('./routes/api');
@@ -35,11 +36,8 @@ mongoose.Promise = global.Promise;
  * This app represents the stub of our API.  As such want to set it up to allow cross-origin
  * requests. 
  */
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
+// This is instead of explicitly defining the CORS headers.
+app.use(cors());
 
 // We got bodyParser from the original tutorial. NodeJS is reporting this as deprecated.
 // TODO: Look for an alternative
@@ -49,11 +47,17 @@ app.use(express.json());
 app.use('/api', routes);
 
 // Anything that doesn't fit the above will give an error
+// Modified to provide API error. This is the final so we don't
+// need to call next
 app.use((err, req, res, next) => {
   console.log("This request not valid");
   console.log(req.url);
   //console.log(err);
-  next();
+  const respMsg = err.message;
+  if (err.hasOwnProperty('custom_msg'))
+    respMsg = err.custom_msg;
+  res.status(500).send({error: respMsg});
+  //next();
 });
 
 

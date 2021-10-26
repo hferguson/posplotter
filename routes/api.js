@@ -46,18 +46,33 @@ const processGeoData = (id, entries) => {
     //console.log(posEntry);
     console.log(`updating entry ${id}. New coordinates ${posEntry.latitude}, ${posEntry.longitude}`);
     BylawReports.updateOne({_id: id}, 
-                           {$set:{'lat' : posEntry.latitude, 'lon' : posEntry.longitude}},
+                           {$set:{'lat' : posEntry.latitude, 'lon' : posEntry.longitude}, 
+                                  'location' : {'type' : 'Point', 'coordinates': [posEntry.longitude, posEntry.latitude]}},
                            {upsert:true})
                 .then("Data inserted")
                 .catch(error => console.log(error));
 }
 
+// All Router functions here.
+// Note, 'next' passes control to the next router handler.  If you have two router.gets that both
+// match, you need to call next() in the first in order for the second to get invoked.
+// More properly, next() passes control back to index.js if there are no other routes.
+// Rather than have each catch block to a res.status(errCode).send(), each one will call
+// next(error) in the catch block and pass control back to our middleware error handler in index.js
+/**
+ * Retrieve all reports
+ * sorted with latest entries last.
+ * TODO: come up with a test to unit test when exception occurs
+ */
 router.get('/reports', (req, res, next) => {
-    BylawReports.find({})
+    BylawReports.find({}).sort({incident_date: -1})
     .then((data) => res.json(data) )        // send data back as a JSON array
-    .catch(next);           // todo, figure out what next is
+    .catch(error => next(error))         
 });
 
+/**
+ * Perform reverse lookup on co-ordinates.
+ */
 router.get('/reports/addrlup/:lat/:lon', (req, res, next) => {
     const lat = req.params.lat;
     const lon = req.params.lon;
@@ -72,28 +87,37 @@ router.get('/reports/addrlup/:lat/:lon', (req, res, next) => {
     //console.log(`Calling ${process.env.GEOURL_BASE}/reverse`)
     axios.get(`${process.env.GEOURL_BASE}/reverse`, {params})
         .then(response => {
-            console.log(response.data);
+            //console.log(response.data);
             return res.json(response.data);
         })
         .catch(error => {
+            // Still figuring out what to do with errors
             console.log("Got error from Position stack API");
             console.log(error);
             const resp = error.response;
             console.log(resp);
             const statusCode = resp.status;
             const statusMsg = resp.statusText;
-            
-            res.json({error: statusMsg});
+            error.custom_msg = statusMsg;
+            next(error);
         });
 
 });
 
+/**
+ * Find duplicate entries.  FOr a given entry, get the 
+ * address string from the request body and return all entries 
+ * 
+ */
 router.get('/reports/:id/finddups', (req, res, next) => {
     const id= req.params.id;
     const rpt = req.body;
     const address_string = rpt.address_string;
     
-    return (res.json([]));
+    BylawReports.find({$and: [{$eq : address_string},{$ne: {_id: id}}] })
+                .then((data) => res.json(data) )        // send data back as a JSON array
+                .catch(error => next(error));           
+    
 });
 
 router.post('/reports', (req, res, next) => {
@@ -108,8 +132,10 @@ router.post('/reports', (req, res, next) => {
                 if (!req.body.lat || !req.body.lon)
                     queryLatLon(data);
             })
-            .then((data) => res.json(data))
-            .catch(res.json({error: "unspecified error"}));
+            .then((data) => {
+                 res.json(data)
+            })
+            .catch((error) => next(error));
     } else {
         let err_msg = 'Incomplete data ';
         if (!req.body.incident_date)
@@ -120,7 +146,8 @@ router.post('/reports', (req, res, next) => {
             err_msg = "Missing address";
         else
             err_msg = "Unknown error";
-            res.json({error: err_msg});
+        error.custom_msg = err_msg;
+        next(error);
     }
 });
 
@@ -130,9 +157,9 @@ router.post('/reports', (req, res, next) => {
 router.delete('/reports/:id', (req, res, next) => {
     BylawReports.findOneAndDelete({ _id: req.params.id })
     .then((data) => {
-            console.log(`deleted item with IF ${req.params.id}`);
+            console.log(`deleted item with ID ${req.params.id}`);
             return res.json(data);
     })
-    .catch(error => {error: error});
+    .catch(error => {res.status(400).send({error: error})});
 });
 module.exports = router;
